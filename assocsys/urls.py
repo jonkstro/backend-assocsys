@@ -1,22 +1,31 @@
-"""
-URL configuration for assocsys project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+
+from rest_framework import routers
+
+from .views import UserActivationView
+from associado.views import AssociadoViewSet
+from carteira.views import CarteiraViewSet
+
+# importações para trabalhar com imagens
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+router = routers.DefaultRouter()
+# SEMPRE APÓS DEFINIR UM get_queryset TEMOS QUE DIZER SEU BASENAME
+router.register(r'associados', AssociadoViewSet, basename='Associado')
+router.register(r'carteiras', CarteiraViewSet, basename='Carteira')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
+    path('', include(router.urls)),
+    # Views de autenticação do DJOSER
+    path('auth/', include('djoser.urls')),
+    # path('auth/', include('djoser.urls.jwt')),
+    path('auth/', include('djoser.urls.authtoken')),
+    # path('auth/', include('djoser.social.urls')),
+    # View de ativação do usuário ao clicar no link enviado pelo djoser:
+    path('activate/<str:uid>/<str:token>/', UserActivationView.as_view()),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # para caso vá trabalhar com imagens
