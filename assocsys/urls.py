@@ -28,4 +28,6 @@ urlpatterns = [
     # path('auth/', include('djoser.social.urls')),
     # View de ativação do usuário ao clicar no link enviado pelo djoser:
     path('activate/<str:uid>/<str:token>/', UserActivationView.as_view()),
+    # Views da carteira (Criar carteira coletiva, individual, etc...)
+    path('carteira/', include('carteira.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # para caso vá trabalhar com imagens

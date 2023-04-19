@@ -15,12 +15,14 @@ import sys
 # Demais importações necessárias
 from django.conf import settings
 import os
+from datetime import datetime
+
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
 )
-from rest_framework.views import Response
+from rest_framework.views import Response, APIView
 
 
 class CarteiraViewSet(viewsets.ModelViewSet):
@@ -43,7 +45,11 @@ class CarteiraViewSet(viewsets.ModelViewSet):
 # FUNÇÃO QUE IRÁ EDITAR AS CARTEIRAS E COLOCAR O NOME DE TODOS ASSOCIADOS, 
 # APÓS ISSO IRÁ SALVAR A IMAGEM DA CARTEIRA EDITADA NA MODEL CARTEIRA.
 
-    def gerar_carteiras(self):
+class GerarCarteirasView(APIView):
+    def get(self, request):
+        now = datetime.now()
+        hoje = now.strftime("%d-%m-%Y-%H-%M-%S")
+
         # Pegando o path do certificado
         path_template = os.path.join(
             settings.BASE_DIR, 'templates/static/img/template_certificado.png'
@@ -53,7 +59,7 @@ class CarteiraViewSet(viewsets.ModelViewSet):
             settings.BASE_DIR, 'templates/static/fontes/arimo.ttf'
         )
 
-        for associado in Associado.all():
+        for associado in Associado.objects.all():
             # Abrindo a imagem base do certificado
             img = Image.open(path_template)
             # Aqui começa a editar a imagem
@@ -64,36 +70,36 @@ class CarteiraViewSet(viewsets.ModelViewSet):
             fonte_info = ImageFont.truetype(path_fonte, 30)
             # Editando a imagem com a fonte de nome
             draw.text((230, 651),
-                      f"{associado.nome}",
-                      font=fonte_nome,
-                      fill=(0, 0, 0)
-                      )
+                        f"{associado.nome}",
+                        font=fonte_nome,
+                        fill=(0, 0, 0)
+                        )
             # Editando a imagem com a fonte de info (secundária)
             draw.text((761, 782),
-                      f"{associado.cpf}",
-                      font=fonte_info,
-                      fill=(0, 0, 0)
-                      )
+                        f"{associado.cpf}",
+                        font=fonte_info,
+                        fill=(0, 0, 0)
+                        )
             # Editando a imagem com a fonte de info
             draw.text((816, 849),
-                      f"{associado.matricula} horas",
-                      font=fonte_info,
-                      fill=(0, 0, 0)
-                      )
+                        f"{associado.matricula} horas",
+                        font=fonte_info,
+                        fill=(0, 0, 0)
+                        )
             # Salvando a imagem em memória ???
             output = BytesIO()
             # Salvando a imagem editada em formato PNG na memória
             img.save(output, format="PNG", quality=100)
             output.seek(0)
             img_final = InMemoryUploadedFile(output,
-                                             # Descrevendo a forma que irá ser salva a imagem:
-                                             'ImageField',  # A imagem será ImageField;
-                                             # Será salva com a matricula + '.png'
-                                             f'{associado.matricula}.png',
-                                             # Demais configurações: Procurar no Google.
-                                             'image/jpeg',
-                                             sys.getsizeof(output),
-                                             None)
+                                                # Descrevendo a forma que irá ser salva a imagem:
+                                                'ImageField',  # A imagem será ImageField;
+                                                # Será salva com a matricula + '.png'
+                                                f'{associado.matricula}-{hoje}.png',
+                                                # Demais configurações: Procurar no Google.
+                                                'image/jpeg',
+                                                sys.getsizeof(output),
+                                                None)
             # Aqui é instanciado o novo certificado com os dados
             carteira_gerada = Carteira(
                 carteira=img_final,
